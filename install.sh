@@ -1,15 +1,27 @@
 #!/bin/bash
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+echo "--- Setting up dependencies ---"
+
 if ! command -v ollama &>/dev/null; then
-    echo "installing Ollama"
+    echo "Installing Ollama..."
     curl -fsSL https://ollama.com/install.sh | sudo sh
 fi
 
-python3 -m venv venv
-source venv/bin/activate
-pip install pyperclip
+if [ ! -d "$SCRIPT_DIR/venv" ]; then
+    python3 -m venv "$SCRIPT_DIR/venv"
+fi
 
+"$SCRIPT_DIR/venv/bin/pip" install pyperclip
 
-chmod +x help_tool.py
-sudo ln -sf "$(pwd)/help_tool.py" /usr/local/bin/help
-echo "Installed. Follow this format: help 'your question'"
+echo "--- Creating system command 'ask' ---"
+
+sudo tee /usr/local/bin/ask > /dev/null <<EOF
+#!/bin/bash
+"$SCRIPT_DIR/venv/bin/python" "$SCRIPT_DIR/help_tool.py" "\$@"
+EOF
+
+sudo chmod +x /usr/local/bin/ask
+
+echo "format: ask 'question'"
