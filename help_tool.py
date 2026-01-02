@@ -11,20 +11,9 @@ def copy_to_clipboard(command):
     except Exception as e:
         return False
 
-def ask_for_clipboard_copy(command):
-    if not command:
-        return
-    print(f"\nCommand: {command}")
-    response = input("Copy to clipboard? (y/n): ").lower().strip()
-    if response == 'y' or response == 'yes':
-        if copy_to_clipboard(command):
-            print("Copied to clipboard.")
-        else:
-            print("Failed to copy.")
-
 def send_to_ollama(prompt, model="llama3.2"):
     try:
-        full_prompt = f"""return only a unix command; no explanation or anything; just the command; no formatting ' ' to enclose the command; here is the prompt {prompt}"""
+        full_prompt = f"""return only unix command; no explanation or formatting; ' ' to enclose the command; prompt: {prompt}"""
         result = subprocess.run(["ollama", "run", model, full_prompt], capture_output=True, text=True,timeout=30)
         if result.returncode == 0:
             return result.stdout.strip()
@@ -41,8 +30,10 @@ def main():
     command = send_to_ollama(args.prompt, args.model)
     if command:
         print(command)
-        if command:
-            ask_for_clipboard_copy(command)
+        if copy_to_clipboard(command):
+            print("Copied to clipboard.")
+        else:
+            print("Failed to copy.")
     else:
         print("No response from Ollama.")
         exit()
